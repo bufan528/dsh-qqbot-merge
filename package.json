@@ -1,0 +1,123 @@
+{
+  "name": "dsh-qqbot-merge",
+  "version": "0.1.0",
+  "icon": "./assets/icons/qq_logo.svg",
+  "description": "在 QQ 私聊和群聊里直接对话 DeepSeek Harness。本包是 @tencent-connect/dsh-qqbot 0.5.3（MIT）的维护分支，新增「连续消息智能合并」（非打断式 steering）与「同一轮单条回复持续修订」。不能与官方 @tencent-connect/dsh-qqbot 同时启用。 Chat with DeepSeek Harness in QQ; maintained fork of dsh-qqbot 0.5.3 adding consecutive-message merging (non-interrupting agent steering) and single-message reply revision.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:client": "tsdown --config tsdown.client.config.ts",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "typecheck:client": "tsc -p tsconfig.client.json",
+    "clean": "rimraf dist lib",
+    "ci:prepare-test-pkg": "node scripts/prepare-test-pkg.js"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "qqbot",
+    "qq",
+    "cordis",
+    "plugin",
+    "chatbot",
+    "im",
+    "steering",
+    "message-merge"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bufan528/dsh-qqbot-merge.git"
+  },
+  "homepage": "https://github.com/bufan528/dsh-qqbot-merge#readme",
+  "bugs": {
+    "url": "https://github.com/bufan528/dsh-qqbot-merge/issues"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    },
+    "compatibility": {
+      "dshReleases": {
+        "0.1.0-rc.8": "compatible",
+        "0.2.0-rc.2": "compatible"
+      },
+      "note": "本包是 @tencent-connect/dsh-qqbot 0.5.3（MIT）的维护分支，dsh.compatibility 继承自上游 0.5.3，未重新声明 0.2.1-rc.3 的端到端验收：新增的合并/单条回复逻辑只做了 TypeScript 构建、单元测试与真实宿主包读取核实，真实 QQ 收发未验证。宿主版本门槛由 engines/peerDependencies 决定（与上游一致）。"
+    }
+  },
+  "dependencies": {
+    "@tencent-connect/qqbot-connector": "1.2.0",
+    "@tencent-connect/qqbot-nodejs": "^1.0.5",
+    "js-yaml": "^4.1.0",
+    "qrcode": "^1.5.4"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.1",
+    "@deepseek-ai/dsh-agent": ">=0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm": ">=0.1.0-rc.6",
+    "@deepseek-ai/dsh-session": ">=0.1.0-rc.6",
+    "@deepseek-ai/dsh-user-approval": ">=0.1.0-rc.6",
+    "@deepseek-ai/schemastery": ">=3.18.1",
+    "@tencent-connect/qqbot-connector": "1.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": false
+    },
+    "@deepseek-ai/schemastery": {
+      "optional": false
+    },
+    "@deepseek-ai/dsh-agent": {
+      "optional": false
+    },
+    "@deepseek-ai/dsh-session": {
+      "optional": false
+    },
+    "@deepseek-ai/dsh-llm": {
+      "optional": false
+    },
+    "@deepseek-ai/dsh-user-approval": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/dsh-agent": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-session": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-system-prompt": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-user-approval": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "3.18.1",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^26.2.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "~18.3.1",
+    "react": "^18.2.0",
+    "tsdown": "^0.22.2",
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.8"
+  }
+}
