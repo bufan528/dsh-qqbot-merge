@@ -5,3 +5,6 @@ lib/
 .dsh-sessions/
 *.tsbuildinfo
 cordis.dev.yml
+*.tgz
+package-lock.json
+
