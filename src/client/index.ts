@@ -17,6 +17,7 @@ import { createElement, type ReactNode } from 'react';
 import { BIND_STATE_PATH } from '../shared/bind-protocol.ts';
 import { BindPanelBody, QQ_BOT_LOGO_PATH, installPanelStyles } from './bind-page.ts';
 import { ConfigPanel } from './config-panel.ts';
+import { MergePanel } from './merge-panel.ts';
 
 export const name = 'im-qqbot-client';
 export const inject = ['slots', 'sidebarRight', 'sidebarRightTabs'];
@@ -131,6 +132,11 @@ export function apply(ctx: Context): void {
     disposers.push(    slots.inject('settings.section', () => slots.register(
       { name: 'settings.section', id: 'qqbot', order: 7, label: 'QQ 机器人' },
       QQBotSettingsSection,
+    )));
+    // 连续消息智能合并：独立栏目，数据走 /qqbot/im-qqbot/merge（未绑定/404 时面板自行降级）
+    disposers.push(slots.inject('settings.section', () => slots.register(
+      { name: 'settings.section', id: 'qqbot-merge', order: 8, label: '连续消息智能合并' },
+      MergePanel,
     )));
   }
 

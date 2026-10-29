@@ -6,6 +6,17 @@ This file records significant dsh-qqbot updates from a product perspective, focu
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.1] - 2026-10-29
+
+### Added
+
+- **In-app merge settings**: a new "连续消息智能合并" section in DSH Settings — enable switch, quiet window, batch message/char limits, direct/group toggles, busy policy (steer / queue) and reply mode (single message / per step) — editable and saved without any other plugin.
+- **Runtime diagnostics**: the same panel shows steer availability, mechanism and integration, eight counters, the most recent batch and the currently applied revision.
+
+### Notes
+
+- New settings route `/qqbot/im-qqbot/merge` (GET status, POST config; same-origin check, 400 on invalid values), registered both while unbound and when bound; configuration is written only to this plugin's own cordis row config.
+
 ## [0.5.3] - 2026-10-27
 
 ### Added

@@ -26,21 +26,21 @@
 > # 4) 重启 DSH 桌面端
 > ```
 >
-> 启用合并（可选，默认关闭、行为与官方 0.5.3 一致）：在 DSH 的 **长期记忆 → QQ 接入 → 连续消息智能合并**
-> 打开开关并保存；或直接改 profile `cordis.patch.yml` 里 `qqbot-merge` 行的
-> `qqbotMerge.enabled: true`。
+> 启用合并（可选，默认关闭、行为与官方 0.5.3 一致）：打开 DSH **设置页 →「连续消息智能合并」**
+> 栏目，打开开关并保存（同一页可直接看到运行期计数与最近一批）；或直接改 profile
+> `cordis.patch.yml` 里 `qqbot-merge` 行的 `qqbotMerge.enabled: true`。
 >
 > > **本地构建（从源码）**
 >
 > ```powershell
 > npm install
 > npm run build          # tsc -> dist/
-> npm run build:client   # tsdown -> lib/client.js（绑定页客户端半边）
-> npx vitest run         # 17 files / 210 tests
-> npm pack               # 283 files, ~1.1 MB
+> npm run build:client   # tsdown -> lib/client.js（绑定页 + 设置面板客户端半边）
+> npx vitest run         # 18 files / 243 tests
+> npm pack               # 291 files, ~1.2 MB
 > ```
 >
-> 然后 `dsh plugin --profile <name> add .\dsh-qqbot-merge-0.1.0.tgz`。
+> 然后 `dsh plugin --profile <name> add .\dsh-qqbot-merge-0.1.1.tgz`。
 
 ### 与官方 0.5.3 的差异
 >
@@ -81,7 +81,7 @@
 
 </div>
 
-> **这是维护分支 `dsh-qqbot-merge@0.1.0`**，fork 自官方
+> **这是维护分支 `dsh-qqbot-merge@0.1.1`**，fork 自官方
 > [`@tencent-connect/dsh-qqbot`](https://github.com/tencent-connect/dsh-qqbot) **0.5.3**（MIT，源码取自
 > `codeload.github.com/tencent-connect/dsh-qqbot/zip/refs/tags/0.5.3`）。在上游功能之上新增：
 >
@@ -94,6 +94,8 @@
 >   同一条 QQ 消息（turn/end 才 complete），流式不可用时降级为轮末单条静态发送。
 > - **对外 cordis 服务 `qqbotMerge`**（契约 `qqbot-merge@v1`）：供 DSH Memory Vault 等插件读取
 >   真实配置/计数/最近批次并写入配置；配置只写本插件自己的 cordis row config。
+> - **端内合并设置**：DSH 设置页的「连续消息智能合并」栏目可直接配置开关 / 静默窗口 / 单批上限 /
+>   私聊与群聊开关 / 运行中策略 / 回复模式，并查看运行期计数与最近一批，不再依赖其他插件。
 >
 > 合并默认 **关闭**（`qqbotMerge.enabled: false`），关闭时行为与官方 0.5.3 完全一致。
 > 本包与官方插件**不能同时启用**（同一个 QQ appId、同名绑定页路由）。
@@ -222,6 +224,30 @@ npx @deepseek-ai/dsh web --patch /path/to/dsh-qqbot/cordis.dev.yml
 | `sendFile.restrictPaths` | boolean | `true` | 是否启用路径白名单（仅 media + cwd + extraRoots） |
 | `sendFile.extraRoots` | string[] | `[]` | 额外允许访问的根目录 |
 
+### 连续消息智能合并（qqbotMerge）
+
+合并配置由本插件自己的设置界面管理，**不再依赖任何其他插件**：打开 DSH **设置页 →
+「连续消息智能合并」**（`settings.section` id `qqbot-merge`），即可编辑下列字段并查看运行期
+状态。数据来自宿主路由 `/qqbot/im-qqbot/merge`（GET 读状态、POST 写配置），未绑定 /
+路由未就绪时面板显示「尚未就绪」而不是报错。也可以直接改 profile 里 `qqbot-merge` 行的
+`qqbotMerge` 字段。
+
+| 配置 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `qqbotMerge.enabled` | boolean | `false` | 是否启用连续消息智能合并（关闭时行为与官方 0.5.3 一致） |
+| `qqbotMerge.windowMs` | number | `800` | 静默合并窗口（ms），100–10000 |
+| `qqbotMerge.maxBatchMessages` | number | `8` | 单批最多合并消息条数，1–50 |
+| `qqbotMerge.maxBatchChars` | number | `4000` | 单批最多合并字符数，200–20000 |
+| `qqbotMerge.scope.c2c` | boolean | `true` | 私聊是否启用合并 |
+| `qqbotMerge.scope.group` | boolean | `false` | 群聊是否启用合并（按发送者分组，同一发送者才合并） |
+| `qqbotMerge.busyPolicy` | `steer`/`queue` | `steer` | 运行中策略：并入当前轮（非打断式）/ 排队到下一轮（旧行为） |
+| `qqbotMerge.replyMode` | `single-message`/`per-step` | `single-message` | 回复模式：同一条消息持续修订 / 按步骤逐条发送 |
+
+同一面板还展示运行期诊断：steer 是否可用、steer 机制、集成方式、说明、8 项运行计数
+（合并批次、并入当前轮、空闲提交、超限溢出、steer 降级、单条修订、单条完成、批次中止）
+与最近一批的条数/字符数/方式/结果。保存后立即生效，并写入本插件自己的 cordis row config
+（宿主会因此重载插件，重载后 revision 归零属正常）。
+
 ## 内置命令
 
 | 命令 | 说明 |
@@ -251,8 +277,15 @@ src/
 │   ├── qr-svg.ts               # 二维码 SVG 渲染（宿主侧）
 │   └── persist.ts              # 凭据写入 cordis.patch.yml
 ├── client/                     # 浏览器半边（dsh.client Web Bundle）
-│   ├── index.ts                # 侧栏 Tab 注册 + 待绑定自动引导
-│   └── bind-page.ts             # 端内绑定页（二维码 + 状态轮询）
+│   ├── index.ts                # 侧栏 Tab + 设置页栏目注册
+│   ├── bind-page.ts            # 端内绑定页（二维码 + 状态轮询）
+│   ├── config-panel.ts         # 设置页基础配置面板
+│   └── merge-panel.ts          # 设置页「连续消息智能合并」面板
+├── merge/                      # 连续消息智能合并
+│   ├── contract.ts             # 跨插件契约（qqbot-merge@v1）
+│   ├── coordinator.ts          # 静默窗口合并 + steer/queue 调度
+│   ├── service.ts              # qqbotMerge 服务 + 单条回复 hooks
+│   └── routes.ts               # 设置路由（/qqbot/im-qqbot/merge）
 ├── gateway/                    # 网关装配
 │   ├── bootstrap.ts            # 启动装配（监听 session/event 等）
 │   └── middleware-setup.ts     # 中间件链配置
@@ -287,6 +320,8 @@ src/
 ├── shared/                     # 共享工具
 │   ├── utils.ts                # 通用函数
 │   ├── scope.ts                # scope/peer 提取
+│   ├── bind-protocol.ts        # 绑定页协议（路由/常量）
+│   ├── merge-protocol.ts       # 合并设置协议（路由/常量）
 │   └── send-helper.ts          # 分块发送
 └── commands/                   # 斜杠命令
 ```

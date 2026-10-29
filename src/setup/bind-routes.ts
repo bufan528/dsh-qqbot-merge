@@ -122,8 +122,8 @@ function stringSchema(name: string): (value: unknown) => unknown {
   };
 }
 
-/** manual 请求体大小上限（appId + appSecret 远小于此值） */
-const MAX_MANUAL_BODY_BYTES = 4096;
+/** 请求体大小上限（appId + appSecret / 合并配置 patch 都远小于此值） */
+const MAX_REQUEST_BODY_BYTES = 4096;
 
 /**
  * 注册绑定路由（状态查询 / 刷新二维码 / 手动凭据）。
@@ -183,8 +183,11 @@ export function registerBindRoutes(
  * 带 Origin 的请求必须与 Host 同源；同源 fetch 与 Desktop IPC 桥
  * （后者会删除 origin 头）均放行。本路由数据不敏感且动作无害，
  * 该级别的防护足够。
+ *
+ * 导出供同样注册在 ctx.webServer 的路由（merge/routes.ts）复用，
+ * 避免同源策略出现两份实现而漂移。
  */
-function trusted(req: IncomingMessage): boolean {
+export function trusted(req: IncomingMessage): boolean {
   const origin = req.headers.origin;
   if (origin === undefined) return true;
   try {
@@ -194,7 +197,8 @@ function trusted(req: IncomingMessage): boolean {
   }
 }
 
-function sendJson(res: ServerResponse, status: number, body: unknown): void {
+/** 统一 JSON 响应（宿主路由共用：绑定路由与合并设置路由） */
+export function sendJson(res: ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
@@ -242,14 +246,14 @@ function handleRefresh(req: IncomingMessage, res: ServerResponse, service: Bindi
   sendJson(res, 200, { phase: 'starting' });
 }
 
-/** 读取并解析 JSON 请求体（带大小上限） */
-async function readJsonBody(req: IncomingMessage): Promise<unknown> {
+/** 读取并解析 JSON 请求体（带大小上限；绑定路由与合并设置路由共用） */
+export async function readJsonBody(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of req) {
     const buffer = chunk as Buffer;
     size += buffer.length;
-    if (size > MAX_MANUAL_BODY_BYTES) throw new Error('request body too large');
+    if (size > MAX_REQUEST_BODY_BYTES) throw new Error('request body too large');
     chunks.push(buffer);
   }
   if (size === 0) throw new Error('empty request body');

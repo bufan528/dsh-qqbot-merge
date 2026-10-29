@@ -15,5 +15,5 @@
     "noUnusedParameters": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/client/**/*.ts", "src/shared/bind-protocol.ts"]
+  "include": ["src/client/**/*.ts", "src/shared/bind-protocol.ts", "src/shared/merge-protocol.ts", "src/merge/contract.ts"]
 }

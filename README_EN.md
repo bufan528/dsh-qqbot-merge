@@ -22,20 +22,21 @@
 > # move appId/appSecret into the `qqbot-merge` row (or re-scan the QR code), then restart DSH.
 > ```
 >
-> Merging is off by default; enable it in **长期记忆 → QQ 接入 → 连续消息智能合并**
-> (Memory Vault) or set `qqbotMerge.enabled: true` in the profile patch.
+> Merging is off by default; enable it in DSH **Settings → "连续消息智能合并"**
+> (the plugin's own section, no other plugin needed) or set `qqbotMerge.enabled: true`
+> in the profile patch.
 >
 > > **Build from source**
 >
 > ```powershell
 > npm install
 > npm run build          # tsc -> dist/
-> npm run build:client   # tsdown -> lib/client.js (client half of the binding UI)
-> npx vitest run         # 17 files / 210 tests
-> npm pack               # 283 files, ~1.1 MB
+> npm run build:client   # tsdown -> lib/client.js (binding UI + settings panels)
+> npx vitest run         # 18 files / 243 tests
+> npm pack               # 291 files, ~1.2 MB
 > ```
 >
-> Then `dsh plugin --profile <name> add .\dsh-qqbot-merge-0.1.0.tgz`.
+> Then `dsh plugin --profile <name> add .\dsh-qqbot-merge-0.1.1.tgz`.
 
 A real QQ end-to-end run has not been verified by the publisher (replacing a running bot and a
 > second gateway connection for the same `appId` were out of scope). Test in a scratch profile and
@@ -190,6 +191,32 @@ npx @deepseek-ai/dsh web --patch /path/to/dsh-qqbot/cordis.dev.yml
 | `sendFile.restrictPaths` | boolean | `true` | Enable path allowlist (media + cwd + extraRoots only) |
 | `sendFile.extraRoots` | string[] | `[]` | Extra allowed root directories |
 
+### Consecutive message merging (qqbotMerge)
+
+Merging is configured from this plugin's own settings section — **no other plugin required**:
+open DSH **Settings →「连续消息智能合并」** (`settings.section` id `qqbot-merge`) to edit the
+fields below and inspect runtime diagnostics. The panel reads/writes through the host route
+`/qqbot/im-qqbot/merge` (GET status, POST config); when the route is unavailable (not bound yet,
+older build) it shows a "尚未就绪" notice instead of crashing. Values can also be edited directly
+in the `qqbotMerge` field of the profile's `qqbot-merge` row.
+
+| Config | Type | Default | Description |
+|------|------|--------|------|
+| `qqbotMerge.enabled` | boolean | `false` | Enable consecutive-message merging (off = stock 0.5.3 behaviour) |
+| `qqbotMerge.windowMs` | number | `800` | Quiet-window length (ms), 100–10000 |
+| `qqbotMerge.maxBatchMessages` | number | `8` | Max messages per batch, 1–50 |
+| `qqbotMerge.maxBatchChars` | number | `4000` | Max characters per batch, 200–20000 |
+| `qqbotMerge.scope.c2c` | boolean | `true` | Enable merging in direct chats |
+| `qqbotMerge.scope.group` | boolean | `false` | Enable merging in groups (grouped by sender) |
+| `qqbotMerge.busyPolicy` | `steer`/`queue` | `steer` | While the agent is busy: non-interrupting steer / queue to the next turn (legacy) |
+| `qqbotMerge.replyMode` | `single-message`/`per-step` | `single-message` | One QQ message revised across steps / one message per step |
+
+The same panel shows runtime diagnostics: whether steer is available, the steer mechanism, the
+integration, a note, eight counters (batches merged, messages steered, follow-ups, overflowed,
+steer fallbacks, reply rewrites, replies completed, batches aborted) and the most recent batch.
+Saving takes effect immediately and persists to this plugin's own cordis row config (the host
+reloads the plugin, so `revision` resets to 0 afterwards — that is expected).
+
 ## Built-in Commands
 
 | Command | Description |
@@ -212,6 +239,16 @@ src/
 ├── config.ts                   # Config schema
 ├── types.ts                    # Global types
 ├── setup.ts                    # Credential binding (QR)
+├── client/                     # Browser half (dsh.client web bundle)
+│   ├── index.ts                # Sidebar tab + settings section registration
+│   ├── bind-page.ts            # In-app binding page (QR + state polling)
+│   ├── config-panel.ts         # Settings: base configuration panel
+│   └── merge-panel.ts          # Settings: consecutive-message merging panel
+├── merge/                      # Consecutive-message merging
+│   ├── contract.ts             # Cross-plugin contract (qqbot-merge@v1)
+│   ├── coordinator.ts          # Quiet-window batching + steer/queue scheduling
+│   ├── service.ts              # qqbotMerge service + single-message reply hooks
+│   └── routes.ts               # Settings route (/qqbot/im-qqbot/merge)
 ├── gateway/                    # Gateway assembly
 │   ├── bootstrap.ts            # Startup wiring (session/event listeners, etc.)
 │   └── middleware-setup.ts     # Middleware chain config
@@ -246,6 +283,8 @@ src/
 ├── shared/                     # Shared utilities
 │   ├── utils.ts                # Common helpers
 │   ├── scope.ts                # scope/peer extraction
+│   ├── bind-protocol.ts        # Binding UI protocol (paths/constants)
+│   ├── merge-protocol.ts       # Merge settings protocol (path/constants)
 │   └── send-helper.ts          # Chunked send
 └── commands/                   # Slash commands
 ```

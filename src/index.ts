@@ -21,6 +21,7 @@ import { ensureCredentials, persistCredentialsToProfile, registerBoundCredential
 import type { Logger } from './types.ts';
 import { normalizeMergeConfig } from './merge/contract.ts';
 import { MergeCoordinator } from './merge/coordinator.ts';
+import { attachMergeRoutes } from './merge/routes.ts';
 import { QqbotMergeRuntime } from './merge/service.ts';
 
 // ── Cordis 插件元数据 ──
@@ -92,6 +93,11 @@ export async function apply(ctx: Context, config: ImQQBotConfig): Promise<void> 
   if (!appId || !appSecret) {
     logger.info('凭据未配置，启动扫码绑定...');
 
+    // 合并设置路由：未绑定（扫码中）fiber 也必须注册。扫码成功后写入
+    // profile 会触发 HMR，新 fiber 走下面的已绑定分支再注册一次；
+    // 两条分支都接上，设置页的「连续消息智能合并」面板才始终可用。
+    attachMergeRoutes(ctx, mergeRuntime, logger);
+
     // 关键：不 await 扫码结果。boot 会等 Loader 树稳定（loader.await()），
     // 无限期等待用户扫码会阻塞 Host ready——Desktop 界面无法进入、
     // Web 的 URL 延迟输出。绑定编排（路由/呈现/生命周期）在
@@ -135,6 +141,9 @@ export async function apply(ctx: Context, config: ImQQBotConfig): Promise<void> 
 
   // 已绑定：注册常驻路由（状态回显 + 手动编辑/更换凭据 + 配置编辑）
   registerBoundCredentialRoutes(ctx, logger, appId, { ...config });
+
+  // 合并设置路由：已绑定 fiber（与扫码分支互斥，同一 fiber 只会走一条）
+  attachMergeRoutes(ctx, mergeRuntime, logger);
 
   const resolvedConfig: ImQQBotConfig = { ...config, appId, appSecret };
 

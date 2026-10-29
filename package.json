@@ -1,6 +1,6 @@
 {
   "name": "dsh-qqbot-merge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "icon": "./assets/icons/qq_logo.svg",
   "description": "在 QQ 私聊和群聊里直接对话 DeepSeek Harness。本包是 @tencent-connect/dsh-qqbot 0.5.3（MIT）的维护分支，新增「连续消息智能合并」（非打断式 steering）与「同一轮单条回复持续修订」。不能与官方 @tencent-connect/dsh-qqbot 同时启用。 Chat with DeepSeek Harness in QQ; maintained fork of dsh-qqbot 0.5.3 adding consecutive-message merging (non-interrupting agent steering) and single-message reply revision.",
   "type": "module",
