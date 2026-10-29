@@ -30,7 +30,19 @@
 > 打开开关并保存；或直接改 profile `cordis.patch.yml` 里 `qqbot-merge` 行的
 > `qqbotMerge.enabled: true`。
 >
-> ### 与官方 0.5.3 的差异
+> > **本地构建（从源码）**
+>
+> ```powershell
+> npm install
+> npm run build          # tsc -> dist/
+> npm run build:client   # tsdown -> lib/client.js（绑定页客户端半边）
+> npx vitest run         # 17 files / 210 tests
+> npm pack               # 283 files, ~1.1 MB
+> ```
+>
+> 然后 `dsh plugin --profile <name> add .\dsh-qqbot-merge-0.1.0.tgz`。
+
+### 与官方 0.5.3 的差异
 >
 > | 方面 | 官方 0.5.3 | 本分支 |
 > |---|---|---|
@@ -318,3 +330,4 @@ npx @deepseek-ai/dsh web --patch /path/to/dsh-qqbot/cordis.dev.yml
 ## License
 
 [MIT](./LICENSE)
+

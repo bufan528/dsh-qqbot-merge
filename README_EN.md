@@ -25,7 +25,19 @@
 > Merging is off by default; enable it in **长期记忆 → QQ 接入 → 连续消息智能合并**
 > (Memory Vault) or set `qqbotMerge.enabled: true` in the profile patch.
 >
-> A real QQ end-to-end run has not been verified by the publisher (replacing a running bot and a
+> > **Build from source**
+>
+> ```powershell
+> npm install
+> npm run build          # tsc -> dist/
+> npm run build:client   # tsdown -> lib/client.js (client half of the binding UI)
+> npx vitest run         # 17 files / 210 tests
+> npm pack               # 283 files, ~1.1 MB
+> ```
+>
+> Then `dsh plugin --profile <name> add .\dsh-qqbot-merge-0.1.0.tgz`.
+
+A real QQ end-to-end run has not been verified by the publisher (replacing a running bot and a
 > second gateway connection for the same `appId` were out of scope). Test in a scratch profile and
 > keep the rollback: restore `@tencent-connect/dsh-qqbot@0.5.3` in `dependencies` / `bundles`.
 
@@ -277,3 +289,4 @@ npx @deepseek-ai/dsh web --patch /path/to/dsh-qqbot/cordis.dev.yml
 ## License
 
 [MIT](./LICENSE)
+
